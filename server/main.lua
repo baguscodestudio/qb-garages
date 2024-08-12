@@ -82,11 +82,13 @@ QBCore.Functions.CreateCallback('qb-garages:server:GetGarageVehicles', function(
     local vehicles
 
     if type == 'depot' then
-        vehicles = MySQL.rawExecute.await('SELECT * FROM player_vehicles WHERE citizenid = ? AND depotprice > 0', { citizenId })
+        vehicles = MySQL.rawExecute.await('SELECT * FROM player_vehicles WHERE citizenid = ? AND depotprice > 0',
+            { citizenId })
     elseif Config.SharedGarages then
         vehicles = MySQL.rawExecute.await('SELECT * FROM player_vehicles WHERE citizenid = ?', { citizenId })
     else
-        vehicles = MySQL.rawExecute.await('SELECT * FROM player_vehicles WHERE citizenid = ? AND garage = ?', { citizenId, garage })
+        vehicles = MySQL.rawExecute.await('SELECT * FROM player_vehicles WHERE citizenid = ? AND garage = ?',
+            { citizenId, garage })
     end
     if #vehicles == 0 then
         cb(nil)
@@ -122,7 +124,8 @@ end
 
 -- Spawns a vehicle and returns its network ID and properties.
 QBCore.Functions.CreateCallback('qb-garages:server:spawnvehicle', function(source, cb, plate, vehicle, coords)
-    local vehType = QBCore.Shared.Vehicles[vehicle] and QBCore.Shared.Vehicles[vehicle].type or GetVehicleTypeByModel(vehicle)
+    local vehType = QBCore.Shared.Vehicles[vehicle] and QBCore.Shared.Vehicles[vehicle].type or
+    GetVehicleTypeByModel(vehicle)
     local veh = CreateVehicleServerSetter(GetHashKey(vehicle), vehType, coords.x, coords.y, coords.z, coords.w)
     local netId = NetworkGetNetworkIdFromEntity(veh)
     SetVehicleNumberPlateText(veh, plate)
@@ -167,14 +170,16 @@ RegisterNetEvent('qb-garages:server:updateVehicleStats', function(plate, fuel, e
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
-    MySQL.update('UPDATE player_vehicles SET fuel = ?, engine = ?, body = ? WHERE plate = ? AND citizenid = ?', { fuel, engine, body, plate, Player.PlayerData.citizenid })
+    MySQL.update('UPDATE player_vehicles SET fuel = ?, engine = ?, body = ? WHERE plate = ? AND citizenid = ?',
+        { fuel, engine, body, plate, Player.PlayerData.citizenid })
 end)
 
 RegisterNetEvent('qb-garages:server:updateVehicleState', function(state, plate)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
     if not Player then return end
-    MySQL.update('UPDATE player_vehicles SET state = ?, depotprice = ? WHERE plate = ? AND citizenid = ?', { state, 0, plate, Player.PlayerData.citizenid })
+    MySQL.update('UPDATE player_vehicles SET state = ?, depotprice = ? WHERE plate = ? AND citizenid = ?',
+        { state, 0, plate, Player.PlayerData.citizenid })
 end)
 
 RegisterNetEvent('qb-garages:server:UpdateOutsideVehicle', function(plate, vehicleNetID)
@@ -219,8 +224,8 @@ end)
 
 -- House Garages
 
-RegisterNetEvent('qb-garages:server:syncGarage', function(updatedGarages)
-    Config.Garages = updatedGarages
+RegisterNetEvent('qb-garages:server:syncGarage', function(name, garage)
+    Config.Garages[name] = garage
 end)
 
 --Call from qb-phone
@@ -229,53 +234,54 @@ QBCore.Functions.CreateCallback('qb-garages:server:GetPlayerVehicles', function(
     local Player = QBCore.Functions.GetPlayer(source)
     local Vehicles = {}
 
-    MySQL.rawExecute('SELECT * FROM player_vehicles WHERE citizenid = ?', { Player.PlayerData.citizenid }, function(result)
-        if result[1] then
-            for _, v in pairs(result) do
-                local VehicleData = QBCore.Shared.Vehicles[v.vehicle]
+    MySQL.rawExecute('SELECT * FROM player_vehicles WHERE citizenid = ?', { Player.PlayerData.citizenid },
+        function(result)
+            if result[1] then
+                for _, v in pairs(result) do
+                    local VehicleData = QBCore.Shared.Vehicles[v.vehicle]
 
-                local VehicleGarage = Lang:t('error.no_garage')
-                if v.garage ~= nil then
-                    if Config.Garages[v.garage] ~= nil then
-                        VehicleGarage = Config.Garages[v.garage].label
-                    else
-                        VehicleGarage = Lang:t('info.house')
+                    local VehicleGarage = Lang:t('error.no_garage')
+                    if v.garage ~= nil then
+                        if Config.Garages[v.garage] ~= nil then
+                            VehicleGarage = Config.Garages[v.garage].label
+                        else
+                            VehicleGarage = Lang:t('info.house')
+                        end
                     end
-                end
 
-                local stateTranslation
-                if v.state == 0 then
-                    stateTranslation = Lang:t('status.out')
-                elseif v.state == 1 then
-                    stateTranslation = Lang:t('status.garaged')
-                elseif v.state == 2 then
-                    stateTranslation = Lang:t('status.impound')
-                end
+                    local stateTranslation
+                    if v.state == 0 then
+                        stateTranslation = Lang:t('status.out')
+                    elseif v.state == 1 then
+                        stateTranslation = Lang:t('status.garaged')
+                    elseif v.state == 2 then
+                        stateTranslation = Lang:t('status.impound')
+                    end
 
-                local fullname
-                if VehicleData and VehicleData['brand'] then
-                    fullname = VehicleData['brand'] .. ' ' .. VehicleData['name']
-                else
-                    fullname = VehicleData and VehicleData['name'] or 'Unknown Vehicle'
-                end
+                    local fullname
+                    if VehicleData and VehicleData['brand'] then
+                        fullname = VehicleData['brand'] .. ' ' .. VehicleData['name']
+                    else
+                        fullname = VehicleData and VehicleData['name'] or 'Unknown Vehicle'
+                    end
 
-                Vehicles[#Vehicles + 1] = {
-                    fullname = fullname,
-                    brand = VehicleData and VehicleData['brand'] or '',
-                    model = VehicleData and VehicleData['name'] or '',
-                    plate = v.plate,
-                    garage = VehicleGarage,
-                    state = stateTranslation,
-                    fuel = v.fuel,
-                    engine = v.engine,
-                    body = v.body
-                }
+                    Vehicles[#Vehicles + 1] = {
+                        fullname = fullname,
+                        brand = VehicleData and VehicleData['brand'] or '',
+                        model = VehicleData and VehicleData['name'] or '',
+                        plate = v.plate,
+                        garage = VehicleGarage,
+                        state = stateTranslation,
+                        fuel = v.fuel,
+                        engine = v.engine,
+                        body = v.body
+                    }
+                end
+                cb(Vehicles)
+            else
+                cb(nil)
             end
-            cb(Vehicles)
-        else
-            cb(nil)
-        end
-    end)
+        end)
 end)
 
 local function getAllGarages()

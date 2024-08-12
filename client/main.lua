@@ -394,21 +394,23 @@ RegisterNetEvent('qb-garages:client:setHouseGarage', function(house, hasKey) -- 
             RemoveHouseZone(zoneName)
         end
     else
-        QBCore.Functions.TriggerCallback('qb-garages:server:getHouseGarage', function(garageInfo) -- create garage if not exist
-            if not garageInfo.garage then return end
-            local garageCoords = json.decode(garageInfo.garage)
-            Config.Garages[formattedHouseName] = {
-                houseName = house,
-                takeVehicle = vector3(garageCoords.x, garageCoords.y, garageCoords.z),
-                spawnPoint = {
-                    vector4(garageCoords.x, garageCoords.y, garageCoords.z, garageCoords.w or garageCoords.h)
-                },
-                label = garageInfo.label,
-                type = 'house',
-                category = Config.VehicleClass['all']
-            }
-            TriggerServerEvent('qb-garages:server:syncGarage', Config.Garages)
-        end, house)
+        QBCore.Functions.TriggerCallback('qb-garages:server:getHouseGarage',
+            function(garageInfo) -- create garage if not exist
+                if not garageInfo.garage then return end
+                local garageCoords = json.decode(garageInfo.garage)
+                Config.Garages[formattedHouseName] = {
+                    houseName = house,
+                    takeVehicle = vector3(garageCoords.x, garageCoords.y, garageCoords.z),
+                    spawnPoint = {
+                        vector4(garageCoords.x, garageCoords.y, garageCoords.z, garageCoords.w or garageCoords.h)
+                    },
+                    label = garageInfo.label,
+                    type = 'house',
+                    category = Config.VehicleClass['all']
+                }
+                TriggerServerEvent('qb-garages:server:syncGarage', formattedHouseName, Config.Garages
+                    [formattedHouseName])
+            end, house)
     end
 end)
 
@@ -420,15 +422,17 @@ RegisterNetEvent('qb-garages:client:houseGarageConfig', function(houseGarages)
                 houseName = house,
                 takeVehicle = vector3(garageConfig.takeVehicle.x, garageConfig.takeVehicle.y, garageConfig.takeVehicle.z),
                 spawnPoint = {
-                    vector4(garageConfig.takeVehicle.x, garageConfig.takeVehicle.y, garageConfig.takeVehicle.z, garageConfig.takeVehicle.w)
+                    vector4(garageConfig.takeVehicle.x, garageConfig.takeVehicle.y, garageConfig.takeVehicle.z,
+                        garageConfig.takeVehicle.w)
                 },
                 label = garageConfig.label,
                 type = 'house',
                 category = Config.VehicleClass['all']
             }
+            TriggerServerEvent('qb-garages:server:syncGarage', formattedHouseName, Config.Garages[formattedHouseName])
+            break
         end
     end
-    TriggerServerEvent('qb-garages:server:syncGarage', Config.Garages)
 end)
 
 RegisterNetEvent('qb-garages:client:addHouseGarage', function(house, garageInfo) -- event from housing on garage creation
@@ -437,13 +441,14 @@ RegisterNetEvent('qb-garages:client:addHouseGarage', function(house, garageInfo)
         houseName = house,
         takeVehicle = vector3(garageInfo.takeVehicle.x, garageInfo.takeVehicle.y, garageInfo.takeVehicle.z),
         spawnPoint = {
-            vector4(garageInfo.takeVehicle.x, garageInfo.takeVehicle.y, garageInfo.takeVehicle.z, garageInfo.takeVehicle.w)
+            vector4(garageInfo.takeVehicle.x, garageInfo.takeVehicle.y, garageInfo.takeVehicle.z,
+                garageInfo.takeVehicle.w)
         },
         label = garageInfo.label,
         type = 'house',
         category = Config.VehicleClass['all']
     }
-    TriggerServerEvent('qb-garages:server:syncGarage', Config.Garages)
+    TriggerServerEvent('qb-garages:server:syncGarage', formattedHouseName, Config.Garages[formattedHouseName])
 end)
 
 -- Handlers
