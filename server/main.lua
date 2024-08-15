@@ -125,7 +125,7 @@ end
 -- Spawns a vehicle and returns its network ID and properties.
 QBCore.Functions.CreateCallback('qb-garages:server:spawnvehicle', function(source, cb, plate, vehicle, coords)
     local vehType = QBCore.Shared.Vehicles[vehicle] and QBCore.Shared.Vehicles[vehicle].type or
-    GetVehicleTypeByModel(vehicle)
+        GetVehicleTypeByModel(vehicle)
     local veh = CreateVehicleServerSetter(GetHashKey(vehicle), vehType, coords.x, coords.y, coords.z, coords.w)
     local netId = NetworkGetNetworkIdFromEntity(veh)
     SetVehicleNumberPlateText(veh, plate)
@@ -152,7 +152,7 @@ QBCore.Functions.CreateCallback('qb-garages:server:canDeposit', function(source,
         cb(false)
         return
     end
-    if type == 'house' and not exports['qb-houses']:hasKey(Player.PlayerData.license, Player.PlayerData.citizenid, Config.Garages[garage].houseName) then
+    if type == 'house' and not exports['bcs_housing']:HasKey(garage, Player.PlayerData.citizenid) then
         cb(false)
         return
     end
